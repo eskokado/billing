@@ -2,31 +2,24 @@ package com.eskcti.algashop.billing.domain.model.invoice;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-
+import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import com.eskcti.algashop.billing.domain.model.DomainException;
 import com.eskcti.algashop.billing.domain.model.IdGenerator;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Setter(AccessLevel.PRIVATE)
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class Invoice {
 
+  @Id
   @EqualsAndHashCode.Include
   private UUID id;
   private String orderId;
@@ -39,12 +32,17 @@ public class Invoice {
 
   private BigDecimal totalAmount;
 
+  @Enumerated(EnumType.STRING)
   private InvoiceStatus status;
 
+  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   private PaymentSettings paymentSettings;
 
+  @ElementCollection
+  @CollectionTable(name = "invoice_line_item", joinColumns = @JoinColumn(name = "invoice_id"))
   private Set<LineItem> items = new HashSet<>();
 
+  @Embedded
   private Payer payer;
 
   private String cancelReason;
@@ -132,6 +130,7 @@ public class Invoice {
           this.getId(), this.getStatus().toString().toLowerCase()));
     }
     PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
+    paymentSettings.setInvoice(this);
     this.setPaymentSettings(paymentSettings);
   }
 }

@@ -8,6 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import com.eskcti.algashop.billing.domain.model.DomainException;
 import com.eskcti.algashop.billing.domain.model.IdGenerator;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -20,13 +25,22 @@ import lombok.Setter;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class PaymentSettings {
 
+  @Id
   @EqualsAndHashCode.Include
   private UUID id;
   private UUID creditCardId;
   private String gatewayCode;
+
+  @Enumerated(EnumType.STRING)
   private PaymentMethod method;
+
+  @OneToOne(mappedBy = "paymentSettings")
+  @Getter(AccessLevel.PRIVATE)
+  @Setter(AccessLevel.PACKAGE)
+  private Invoice invoice;
 
   static PaymentSettings brandNew(PaymentMethod method, UUID creditCardId) {
     Objects.requireNonNull(method);
@@ -37,7 +51,8 @@ public class PaymentSettings {
         IdGenerator.generateTimeBasedUUID(),
         creditCardId,
         null,
-        method);
+        method,
+        null);
   }
 
   void assignGatewayCode(String gatewayCode) {

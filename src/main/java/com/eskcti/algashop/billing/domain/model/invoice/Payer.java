@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import com.eskcti.algashop.billing.domain.model.FieldValidations;
 
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,11 +18,13 @@ import lombok.Setter;
 @Setter(AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Embeddable
 public class Payer {
   private String fullName;
   private String document;
   private String phone;
   private String email;
+  @Embedded
   private Address address;
 
   @Builder
