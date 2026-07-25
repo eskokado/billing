@@ -93,7 +93,9 @@ tasks.register('integrationTest', Test) {
 
 def jacocoCoverageExcludes = [
 	'**/BillingApplication.class',
-	'**/DomainException.class'
+	'**/DomainException.class',
+	'**/CreditCardNotFoundException.class'
+
 ]
 
 jacocoTestReport {
