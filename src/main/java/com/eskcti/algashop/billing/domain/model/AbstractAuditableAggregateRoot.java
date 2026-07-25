@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.EntityListeners;
@@ -20,7 +21,8 @@ import lombok.Setter;
 @Setter(AccessLevel.PRIVATE)
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class AbstractAuditableEntity {
+public abstract class AbstractAuditableAggregateRoot<T extends AbstractAggregateRoot<T>>
+    extends AbstractAggregateRoot<T> {
 
   @CreatedBy
   protected UUID createdByUserId;

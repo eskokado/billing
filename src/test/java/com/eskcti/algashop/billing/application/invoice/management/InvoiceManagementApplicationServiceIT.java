@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,7 +29,10 @@ import com.eskcti.algashop.billing.domain.model.creditcard.CreditCardNotFoundExc
 import com.eskcti.algashop.billing.domain.model.creditcard.CreditCardRepository;
 import com.eskcti.algashop.billing.domain.model.creditcard.CreditCardTestDataBuilder;
 import com.eskcti.algashop.billing.domain.model.invoice.Invoice;
+import com.eskcti.algashop.billing.domain.model.invoice.InvoiceCanceledEvent;
+import com.eskcti.algashop.billing.domain.model.invoice.InvoiceIssuedEvent;
 import com.eskcti.algashop.billing.domain.model.invoice.InvoiceNotFoundException;
+import com.eskcti.algashop.billing.domain.model.invoice.InvoicePaidEvent;
 import com.eskcti.algashop.billing.domain.model.invoice.InvoiceRepository;
 import com.eskcti.algashop.billing.domain.model.invoice.InvoiceStatus;
 import com.eskcti.algashop.billing.domain.model.invoice.InvoiceTestDataBuilder;
@@ -39,6 +43,7 @@ import com.eskcti.algashop.billing.domain.model.invoice.payment.Payment;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentGatewayService;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentRequest;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentStatus;
+import com.eskcti.algashop.billing.infrastructure.listener.InvoiceEventListener;
 
 @SpringBootTest
 @Transactional
@@ -58,6 +63,9 @@ class InvoiceManagementApplicationServiceIT {
 
   @MockitoBean
   private PaymentGatewayService paymentGatewayService;
+
+  @MockitoSpyBean
+  private InvoiceEventListener invoiceEventListener;
 
   @Test
   void shouldGenerateInvoiceWithCreditCardAsPayment() {
@@ -86,6 +94,7 @@ class InvoiceManagementApplicationServiceIT {
     assertAuditingFieldsOnCreate(invoice);
 
     verify(invoicingService).issue(any(), any(), any(), any());
+    verify(invoiceEventListener).listen(any(InvoiceIssuedEvent.class));
   }
 
   @Test
@@ -106,6 +115,7 @@ class InvoiceManagementApplicationServiceIT {
     assertAuditingFieldsOnCreate(invoice);
 
     verify(invoicingService).issue(any(), any(), any(), any());
+    verify(invoiceEventListener).listen(any(InvoiceIssuedEvent.class));
   }
 
   @Test
@@ -140,6 +150,8 @@ class InvoiceManagementApplicationServiceIT {
           assertThat(item.getAmount()).isEqualByComparingTo("50.00");
         });
     assertThat(invoice.getTotalAmount()).isEqualByComparingTo("150.00");
+
+    verify(invoiceEventListener).listen(any(InvoiceIssuedEvent.class));
   }
 
   @Test
@@ -152,6 +164,8 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThatThrownBy(() -> applicationService.generate(input))
         .isInstanceOf(CreditCardNotFoundException.class);
+
+    verify(invoiceEventListener, never()).listen(any(InvoiceIssuedEvent.class));
   }
 
   @Test
@@ -166,6 +180,8 @@ class InvoiceManagementApplicationServiceIT {
     assertThatThrownBy(() -> applicationService.generate(input))
         .isInstanceOf(DomainException.class)
         .hasMessageContaining("Invoice already exists for order");
+
+    verify(invoiceEventListener, times(1)).listen(any(InvoiceIssuedEvent.class));
   }
 
   @Test
@@ -191,12 +207,15 @@ class InvoiceManagementApplicationServiceIT {
     assertThat(requestCaptor.getValue().getAmount()).isEqualByComparingTo(invoice.getTotalAmount());
     assertThat(requestCaptor.getValue().getMethod()).isEqualTo(PaymentMethod.GATEWAY_BALANCE);
     verify(invoicingService).assignPayment(any(Invoice.class), any(Payment.class));
+    verify(invoiceEventListener).listen(any(InvoicePaidEvent.class));
   }
 
   @Test
   void shouldThrowWhenInvoiceNotFoundOnProcessPayment() {
     assertThatThrownBy(() -> applicationService.processPayment(UUID.randomUUID()))
         .isInstanceOf(InvoiceNotFoundException.class);
+
+    verify(invoiceEventListener, never()).listen(any(InvoicePaidEvent.class));
   }
 
   @Test
@@ -216,6 +235,7 @@ class InvoiceManagementApplicationServiceIT {
     assertThat(canceledInvoice.getCancelReason()).isEqualTo("Payment capture failed");
     assertAuditingFieldsOnUpdate(createdAtBefore, createdByBefore, lastModifiedBefore, canceledInvoice);
     verify(invoicingService, never()).assignPayment(any(Invoice.class), any(Payment.class));
+    verify(invoiceEventListener).listen(any(InvoiceCanceledEvent.class));
   }
 
   @Test
@@ -231,6 +251,7 @@ class InvoiceManagementApplicationServiceIT {
     assertThat(canceledInvoice.isCanceled()).isTrue();
     assertThat(canceledInvoice.getCancelReason()).isEqualTo("Payment failed");
     assertThat(canceledInvoice.getPaymentSettings().getGatewayCode()).isEqualTo("12345");
+    verify(invoiceEventListener).listen(any(InvoiceCanceledEvent.class));
   }
 
   @Test
@@ -245,6 +266,7 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThat(canceledInvoice.isCanceled()).isTrue();
     assertThat(canceledInvoice.getCancelReason()).isEqualTo("Payment refunded");
+    verify(invoiceEventListener).listen(any(InvoiceCanceledEvent.class));
   }
 
   private void assertAuditingFieldsOnCreate(Invoice invoice) {
