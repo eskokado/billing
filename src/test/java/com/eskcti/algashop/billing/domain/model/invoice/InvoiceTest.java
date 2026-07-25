@@ -1,11 +1,12 @@
 package com.eskcti.algashop.billing.domain.model.invoice;
 
+import static com.eskcti.algashop.billing.domain.model.invoice.InvoiceTestDataBuilder.aLineItemAlt;
+import static com.eskcti.algashop.billing.domain.model.invoice.InvoiceTestDataBuilder.aPayer;
+import static com.eskcti.algashop.billing.domain.model.invoice.InvoiceTestDataBuilder.anInvoice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -17,16 +18,19 @@ class InvoiceTest {
   @Test
   void shouldIssueInvoice() {
     UUID customerId = UUID.randomUUID();
-    Payer payer = PayerTest.validPayer();
-    Set<LineItem> items = Set.of(LineItemTest.validLineItem());
+    Payer payer = aPayer();
 
-    Invoice invoice = Invoice.issue("order-1", customerId, payer, items);
+    Invoice invoice = anInvoice()
+        .orderId("order-1")
+        .customerId(customerId)
+        .payer(payer)
+        .build();
 
     assertThat(invoice.getId()).isNotNull();
     assertThat(invoice.getOrderId()).isEqualTo("order-1");
     assertThat(invoice.getCustomerId()).isEqualTo(customerId);
     assertThat(invoice.getPayer()).isEqualTo(payer);
-    assertThat(invoice.getTotalAmount()).isEqualByComparingTo("100.00");
+    assertThat(invoice.getTotalAmount()).isEqualByComparingTo("200.00");
     assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.UNPAID);
     assertThat(invoice.getIssuedAt()).isNotNull();
     assertThat(invoice.getExpiresAt()).isAfter(invoice.getIssuedAt());
@@ -37,36 +41,33 @@ class InvoiceTest {
 
   @Test
   void shouldReturnUnmodifiableItems() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
 
-    assertThatThrownBy(() -> invoice.getItems().add(LineItemTest.validLineItem()))
+    assertThatThrownBy(() -> invoice.getItems().add(aLineItemAlt()))
         .isInstanceOf(UnsupportedOperationException.class);
   }
 
   @Test
   void shouldRejectBlankOrderIdOnIssue() {
-    assertThatThrownBy(() -> Invoice.issue(" ", UUID.randomUUID(), PayerTest.validPayer(),
-        Set.of(LineItemTest.validLineItem())))
+    assertThatThrownBy(() -> anInvoice().orderId(" ").build())
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void shouldRejectEmptyItemsOnIssue() {
-    assertThatThrownBy(() -> Invoice.issue("order-1", UUID.randomUUID(), PayerTest.validPayer(),
-        Collections.emptySet()))
+    assertThatThrownBy(() -> anInvoice().items(Collections.emptySet()).build())
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   void shouldRejectNullCustomerIdOnIssue() {
-    assertThatThrownBy(() -> Invoice.issue("order-1", null, PayerTest.validPayer(),
-        Set.of(LineItemTest.validLineItem())))
+    assertThatThrownBy(() -> anInvoice().customerId(null).build())
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   void shouldMarkAsPaid() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
 
     invoice.markAsPaid();
 
@@ -76,8 +77,7 @@ class InvoiceTest {
 
   @Test
   void shouldNotMarkAsPaidWhenNotUnpaid() {
-    Invoice invoice = issueValidInvoice();
-    invoice.markAsPaid();
+    Invoice invoice = anInvoice().status(InvoiceStatus.PAID).build();
 
     assertThatThrownBy(invoice::markAsPaid)
         .isInstanceOf(DomainException.class)
@@ -86,7 +86,7 @@ class InvoiceTest {
 
   @Test
   void shouldCancelInvoice() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
 
     invoice.cancel("customer request");
 
@@ -97,8 +97,10 @@ class InvoiceTest {
 
   @Test
   void shouldNotCancelAlreadyCanceledInvoice() {
-    Invoice invoice = issueValidInvoice();
-    invoice.cancel("first reason");
+    Invoice invoice = anInvoice()
+        .status(InvoiceStatus.CANCELED)
+        .cancelReason("first reason")
+        .build();
 
     assertThatThrownBy(() -> invoice.cancel("second reason"))
         .isInstanceOf(DomainException.class)
@@ -107,7 +109,7 @@ class InvoiceTest {
 
   @Test
   void shouldChangePaymentSettingsWithCreditCard() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
     UUID creditCardId = UUID.randomUUID();
 
     invoice.changePaymentSettings(PaymentMethod.CREDIT_CARD, creditCardId);
@@ -119,7 +121,7 @@ class InvoiceTest {
 
   @Test
   void shouldChangePaymentSettingsWithGatewayBalance() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
 
     invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null);
 
@@ -130,7 +132,7 @@ class InvoiceTest {
 
   @Test
   void shouldRejectCreditCardPaymentWithoutCreditCardId() {
-    Invoice invoice = issueValidInvoice();
+    Invoice invoice = anInvoice().build();
 
     assertThatThrownBy(() -> invoice.changePaymentSettings(PaymentMethod.CREDIT_CARD, null))
         .isInstanceOf(NullPointerException.class);
@@ -138,8 +140,7 @@ class InvoiceTest {
 
   @Test
   void shouldNotChangePaymentSettingsWhenNotUnpaid() {
-    Invoice invoice = issueValidInvoice();
-    invoice.markAsPaid();
+    Invoice invoice = anInvoice().status(InvoiceStatus.PAID).build();
 
     assertThatThrownBy(() -> invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null))
         .isInstanceOf(DomainException.class)
@@ -148,8 +149,9 @@ class InvoiceTest {
 
   @Test
   void shouldAssignPaymentGatewayCode() {
-    Invoice invoice = issueValidInvoice();
-    invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null);
+    Invoice invoice = anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .build();
 
     invoice.assignPaymentGatewayCode("gateway-123");
 
@@ -158,9 +160,10 @@ class InvoiceTest {
 
   @Test
   void shouldNotAssignPaymentGatewayCodeWhenNotUnpaid() {
-    Invoice invoice = issueValidInvoice();
-    invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null);
-    invoice.markAsPaid();
+    Invoice invoice = anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .status(InvoiceStatus.PAID)
+        .build();
 
     assertThatThrownBy(() -> invoice.assignPaymentGatewayCode("gateway-123"))
         .isInstanceOf(DomainException.class)
@@ -169,8 +172,9 @@ class InvoiceTest {
 
   @Test
   void shouldNotAssignBlankPaymentGatewayCode() {
-    Invoice invoice = issueValidInvoice();
-    invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null);
+    Invoice invoice = anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .build();
 
     assertThatThrownBy(() -> invoice.assignPaymentGatewayCode(" "))
         .isInstanceOf(IllegalArgumentException.class);
@@ -178,20 +182,13 @@ class InvoiceTest {
 
   @Test
   void shouldNotReassignPaymentGatewayCode() {
-    Invoice invoice = issueValidInvoice();
-    invoice.changePaymentSettings(PaymentMethod.GATEWAY_BALANCE, null);
-    invoice.assignPaymentGatewayCode("gateway-123");
+    Invoice invoice = anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .gatewayCode("gateway-123")
+        .build();
 
     assertThatThrownBy(() -> invoice.assignPaymentGatewayCode("gateway-456"))
         .isInstanceOf(DomainException.class)
         .hasMessageContaining("Gateway code already assigned");
-  }
-
-  private Invoice issueValidInvoice() {
-    return Invoice.issue(
-        "order-1",
-        UUID.randomUUID(),
-        PayerTest.validPayer(),
-        Set.of(LineItemTest.validLineItem()));
   }
 }
