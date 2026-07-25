@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -82,6 +83,7 @@ class InvoiceManagementApplicationServiceIT {
     assertThat(invoice.getPayer().getFullName()).isEqualTo(input.getPayer().getFullName());
     assertThat(invoice.getPayer().getEmail()).isEqualTo(input.getPayer().getEmail());
     assertThat(invoice.getPayer().getAddress().getCity()).isEqualTo(input.getPayer().getAddress().getCity());
+    assertAuditingFieldsOnCreate(invoice);
 
     verify(invoicingService).issue(any(), any(), any(), any());
   }
@@ -101,6 +103,7 @@ class InvoiceManagementApplicationServiceIT {
     assertThat(invoice.getOrderId()).isEqualTo(input.getOrderId());
     assertThat(invoice.getPaymentSettings().getMethod()).isEqualTo(PaymentMethod.GATEWAY_BALANCE);
     assertThat(invoice.getPaymentSettings().getCreditCardId()).isNull();
+    assertAuditingFieldsOnCreate(invoice);
 
     verify(invoicingService).issue(any(), any(), any(), any());
   }
@@ -168,6 +171,9 @@ class InvoiceManagementApplicationServiceIT {
   @Test
   void shouldProcessInvoicePayment() {
     Invoice invoice = persistUnpaidInvoice();
+    OffsetDateTime createdAtBefore = invoice.getCreatedAt();
+    UUID createdByBefore = invoice.getCreatedByUserId();
+    OffsetDateTime lastModifiedBefore = invoice.getLastModifiedDate();
     Payment payment = aPayment(invoice, PaymentStatus.PAID, "12345");
     when(paymentGatewayService.capture(any(PaymentRequest.class))).thenReturn(payment);
 
@@ -177,6 +183,7 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThat(paidInvoice.isPaid()).isTrue();
     assertThat(paidInvoice.getPaymentSettings().getGatewayCode()).isEqualTo("12345");
+    assertAuditingFieldsOnUpdate(createdAtBefore, createdByBefore, lastModifiedBefore, paidInvoice);
 
     ArgumentCaptor<PaymentRequest> requestCaptor = ArgumentCaptor.forClass(PaymentRequest.class);
     verify(paymentGatewayService).capture(requestCaptor.capture());
@@ -195,6 +202,9 @@ class InvoiceManagementApplicationServiceIT {
   @Test
   void shouldCancelInvoiceWhenPaymentCaptureFails() {
     Invoice invoice = persistUnpaidInvoice();
+    OffsetDateTime createdAtBefore = invoice.getCreatedAt();
+    UUID createdByBefore = invoice.getCreatedByUserId();
+    OffsetDateTime lastModifiedBefore = invoice.getLastModifiedDate();
     when(paymentGatewayService.capture(any(PaymentRequest.class)))
         .thenThrow(new RuntimeException("gateway unavailable"));
 
@@ -204,6 +214,7 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThat(canceledInvoice.isCanceled()).isTrue();
     assertThat(canceledInvoice.getCancelReason()).isEqualTo("Payment capture failed");
+    assertAuditingFieldsOnUpdate(createdAtBefore, createdByBefore, lastModifiedBefore, canceledInvoice);
     verify(invoicingService, never()).assignPayment(any(Invoice.class), any(Payment.class));
   }
 
@@ -234,6 +245,23 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThat(canceledInvoice.isCanceled()).isTrue();
     assertThat(canceledInvoice.getCancelReason()).isEqualTo("Payment refunded");
+  }
+
+  private void assertAuditingFieldsOnCreate(Invoice invoice) {
+    assertThat(invoice.getCreatedAt()).isNotNull();
+    assertThat(invoice.getCreatedByUserId()).isNotNull();
+    assertThat(invoice.getLastModifiedDate()).isNotNull();
+    assertThat(invoice.getLastModifiedByUserId()).isNotNull();
+    assertThat(invoice.getVersion()).isZero();
+  }
+
+  private void assertAuditingFieldsOnUpdate(OffsetDateTime createdAtBefore, UUID createdByBefore,
+      OffsetDateTime lastModifiedBefore, Invoice after) {
+    assertThat(after.getCreatedAt()).isEqualTo(createdAtBefore);
+    assertThat(after.getCreatedByUserId()).isEqualTo(createdByBefore);
+    assertThat(after.getLastModifiedDate()).isNotNull();
+    assertThat(after.getLastModifiedDate()).isAfterOrEqualTo(lastModifiedBefore);
+    assertThat(after.getLastModifiedByUserId()).isNotNull();
   }
 
   private Invoice persistUnpaidInvoice() {

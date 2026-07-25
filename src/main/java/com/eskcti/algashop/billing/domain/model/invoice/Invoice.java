@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
+import com.eskcti.algashop.billing.domain.model.AbstractAuditableEntity;
 import com.eskcti.algashop.billing.domain.model.DomainException;
 import com.eskcti.algashop.billing.domain.model.IdGenerator;
 
@@ -13,11 +14,11 @@ import lombok.*;
 
 @Setter(AccessLevel.PRIVATE)
 @Getter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class Invoice {
+public class Invoice extends AbstractAuditableEntity {
 
   @Id
   @EqualsAndHashCode.Include
