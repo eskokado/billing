@@ -1,7 +1,15 @@
+buildscript {
+	dependencies {
+		classpath 'org.flywaydb:flyway-core:11.13.0'
+		classpath 'org.flywaydb:flyway-database-postgresql:11.13.0'
+	}
+}
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.4'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.flywaydb.flyway' version '11.13.0'
 	id 'jacoco'
 }
 
@@ -33,14 +41,17 @@ dependencies {
   implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.modelmapper:modelmapper:3.2.4'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.apache.commons:commons-lang3:3.18.0'
-	runtimeOnly 'com.h2database:h2'
   compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.assertj:assertj-core:3.27.3'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	mockitoAgent('org.mockito:mockito-core:5.14.2') {transitive = false}
 }
