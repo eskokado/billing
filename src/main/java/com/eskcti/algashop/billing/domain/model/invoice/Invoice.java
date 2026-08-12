@@ -39,7 +39,7 @@ public class Invoice extends AbstractAuditableAggregateRoot<Invoice> {
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   private PaymentSettings paymentSettings;
 
-  @ElementCollection
+  @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "invoice_line_item", joinColumns = @JoinColumn(name = "invoice_id"))
   private Set<LineItem> items = new HashSet<>();
 
