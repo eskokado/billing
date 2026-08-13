@@ -12,6 +12,7 @@ import com.eskcti.algashop.billing.domain.model.invoice.PaymentMethod;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.Payment;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentRequest;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentStatus;
+import com.eskcti.algashop.billing.infrastructure.payment.fake.PaymentGatewayServiceFakeImpl;
 
 class PaymentGatewayServiceFakeImplTest {
 
