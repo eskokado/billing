@@ -77,7 +77,9 @@ class InvoiceManagementApplicationServiceIT {
 
   @Test
   void shouldGenerateInvoiceWithCreditCardAsPayment() {
-    CreditCard creditCard = CreditCardTestDataBuilder.aCreditCard().build();
+    CreditCard creditCard = CreditCardTestDataBuilder.aCreditCard()
+        .customerId(GenerateInvoiceInputTestDataBuilder.DEFAULT_CUSTOMER_ID)
+        .build();
     creditCardRepository.saveAndFlush(creditCard);
 
     GenerateInvoiceInput input = anInput().build();
@@ -172,6 +174,27 @@ class InvoiceManagementApplicationServiceIT {
 
     assertThatThrownBy(() -> applicationService.generate(input))
         .isInstanceOf(CreditCardNotFoundException.class);
+
+    verify(invoiceEventListener, never()).listen(any(InvoiceIssuedEvent.class));
+  }
+
+  @Test
+  void shouldThrowWhenCreditCardBelongsToAnotherCustomer() {
+    CreditCard anotherCustomerCreditCard = CreditCardTestDataBuilder.aCreditCard()
+        .customerId(GenerateInvoiceInputTestDataBuilder.SECOND_CUSTOMER_ID)
+        .build();
+    creditCardRepository.saveAndFlush(anotherCustomerCreditCard);
+
+    GenerateInvoiceInput input = anInput().build();
+    input.setPaymentSettings(PaymentSettingsInput.builder()
+        .method(PaymentMethod.CREDIT_CARD)
+        .creditCardId(anotherCustomerCreditCard.getId())
+        .build());
+
+    assertThatThrownBy(() -> applicationService.generate(input))
+        .isInstanceOf(CreditCardNotFoundException.class)
+        .hasMessageContaining(anotherCustomerCreditCard.getId().toString())
+        .hasMessageContaining(GenerateInvoiceInputTestDataBuilder.DEFAULT_CUSTOMER_ID.toString());
 
     verify(invoiceEventListener, never()).listen(any(InvoiceIssuedEvent.class));
   }

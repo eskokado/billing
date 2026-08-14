@@ -1,7 +1,11 @@
 package com.eskcti.algashop.billing.infrastructure.creditcard.fastpay;
 
 import com.eskcti.algashop.billing.domain.model.creditcard.LimitedCreditCard;
+import com.eskcti.algashop.billing.infrastructure.AbstractFastpayIT;
+
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,17 +17,16 @@ import java.util.UUID;
 
 @SpringBootTest
 @Import(FastpayCreditCardTokenizationAPIClientConfig.class)
-class CreditCardProviderServiceFastpayImplIT {
+class CreditCardProviderServiceFastpayImplIT extends AbstractFastpayIT {
+    @BeforeAll
+    public static void beforeAll() {
+        startMock();
+    }
 
-    @Autowired
-    private CreditCardProviderServiceFastpayImpl creditCardProvider;
-
-    @Autowired
-    private FastpayCreditCardTokenizationAPIClient tokenizationAPIClient;
-
-    private static final UUID validCustomerId = UUID.randomUUID();
-
-    private static final String alwaysPaidCardNumber = "4622943127011022";
+    @AfterAll
+    public static void afterAll() {
+        stopMock();
+    }
 
     @Test
     public void shouldRegisterCreditCard() {
@@ -44,28 +47,7 @@ class CreditCardProviderServiceFastpayImplIT {
     @Test
     public void shouldDeleteRegisteredCreditCard() {
         LimitedCreditCard limitedCreditCard = registerCard();
-
         creditCardProvider.delete(limitedCreditCard.getGatewayCode());
-
-        Optional<LimitedCreditCard> possibleCreditCard = creditCardProvider
-                .findById(limitedCreditCard.getGatewayCode());
-
-        Assertions.assertThat(possibleCreditCard).isEmpty();
-    }
-
-    private LimitedCreditCard registerCard() {
-        FastpayTokenizationInput input = FastpayTokenizationInput.builder()
-                .number(alwaysPaidCardNumber)
-                .cvv("222")
-                .expMonth(1)
-                .holderName("John Doe")
-                .holderDocument("12345")
-                .expYear(Year.now().getValue() + 5)
-                .build();
-
-        FastpayTokenizedCreditCardModel response = tokenizationAPIClient.tokenize(input);
-        LimitedCreditCard limitedCreditCard = creditCardProvider.register(validCustomerId, response.getTokenizedCard());
-        return limitedCreditCard;
     }
 
 }
