@@ -41,9 +41,9 @@ public class PaymentGatewayServiceFastpayImpl implements PaymentGatewayService {
 
     @Override
     public Payment capture(PaymentRequest request) {
-        FastpayPaymentInput input = convertToInput(request);
         log.info("Sending payment capture request to Fastpay for invoice {}", request.getInvoiceId());
         try {
+            FastpayPaymentInput input = convertToInput(request);
             FastpayPaymentModel response = fastpayPaymentAPIClient.capture(input);
             log.info("Payment capture response received for invoice {}: status={}", request.getInvoiceId(),
                     response.getStatus());

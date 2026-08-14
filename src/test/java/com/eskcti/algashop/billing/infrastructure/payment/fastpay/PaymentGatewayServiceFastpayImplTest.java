@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.Optional;
 import java.util.UUID;
@@ -448,6 +449,181 @@ class PaymentGatewayServiceFastpayImplTest {
                 HttpStatusCode weird = HttpStatusCode.valueOf(499);
                 when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
                                 .thenThrow(new ErrorResponseException(weird));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("client error");
+        }
+
+        @Test
+        void shouldThrowGatewayTimeoutOnHttpServerErrorDuringCapture() {
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class)))
+                                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                "Internal Server Error"));
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("50.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("server error");
+        }
+
+        @Test
+        void shouldThrowGatewayTimeoutOnErrorResponseException5xxDuringCapture() {
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class)))
+                                .thenThrow(new ErrorResponseException(HttpStatus.BAD_GATEWAY));
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("10.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("server error");
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnIllegalArgumentExceptionDuringCapture() {
+                FastpayPaymentModel response = aFastpayResponse(
+                                DEFAULT_GATEWAY_PAYMENT_ID,
+                                DEFAULT_INVOICE_ID.toString(),
+                                "UNKNOWN_METHOD",
+                                FastpayPaymentStatus.PAID.name());
+
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class))).thenReturn(response);
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("10.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("unexpected response");
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnUnexpectedExceptionDuringCapture() {
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class)))
+                                .thenThrow(new RuntimeException("kaboom"));
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("10.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("Unexpected error");
+        }
+
+        @Test
+        void shouldRethrowHttpClientNotFoundOnLookup() {
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(HttpClientErrorException.NotFound.create(HttpStatus.NOT_FOUND,
+                                                "Not Found", null, null, null));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(HttpClientErrorException.NotFound.class);
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnCaptureWhenResourceAccessHasMessageWithoutTimeoutWords() {
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class)))
+                                .thenThrow(new ResourceAccessException("Connection reset by peer",
+                                                new ConnectException("Connection refused")));
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("10.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("Payment gateway is unavailable");
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnLookupWhenResourceAccessHasMessageWithoutTimeoutWords() {
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(new ResourceAccessException("Connection reset by peer",
+                                                new ConnectException("Connection refused")));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("Payment gateway is unavailable");
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnLookupWhenErrorResponseHasUnknownStatusCode() {
+                HttpStatusCode weird = HttpStatusCode.valueOf(999);
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(new ErrorResponseException(weird));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("client error");
+        }
+
+        @Test
+        void shouldThrowGatewayTimeoutOnCaptureWhenResourceAccessMessageHasTimedOutWord() {
+                when(fastpayPaymentAPIClient.capture(any(FastpayPaymentInput.class)))
+                                .thenThrow(new ResourceAccessException("Read timed out while writing",
+                                                new ConnectException()));
+
+                PaymentRequest request = PaymentRequest.builder()
+                                .amount(new BigDecimal("10.00"))
+                                .invoiceId(DEFAULT_INVOICE_ID)
+                                .method(PaymentMethod.GATEWAY_BALANCE)
+                                .payer(aPayer())
+                                .build();
+
+                assertThatThrownBy(() -> service.capture(request))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("timed out");
+        }
+
+        @Test
+        void shouldThrowGatewayTimeoutOnLookupWhenResourceAccessMessageHasTimedOutWord() {
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(new ResourceAccessException("Read timed out while reading",
+                                                new ConnectException()));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("timed out");
+        }
+
+        @Test
+        void shouldThrowGatewayTimeoutOnLookupWhenResourceAccessMessageHasTimeOutHyphen() {
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(new ResourceAccessException("restclient time-out expired",
+                                                new ConnectException()));
+
+                assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("timed out");
+        }
+
+        @Test
+        void shouldThrowBadGatewayOnLookupWhenErrorResponseHasKnown4xxStatusCode() {
+                HttpStatus badRequest = HttpStatus.BAD_REQUEST;
+                when(fastpayPaymentAPIClient.findById(DEFAULT_GATEWAY_PAYMENT_ID))
+                                .thenThrow(new ErrorResponseException(badRequest));
 
                 assertThatThrownBy(() -> service.findByCode(DEFAULT_GATEWAY_PAYMENT_ID))
                                 .isInstanceOf(BadGatewayException.class)
