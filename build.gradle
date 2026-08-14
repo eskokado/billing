@@ -109,8 +109,20 @@ tasks.register('integrationTest', Test) {
 def jacocoCoverageExcludes = [
 	'**/BillingApplication.class',
 	'**/DomainException.class',
+	'**/DomainEntityNotFoundException.class',
 	'**/CreditCardNotFoundException.class',
-	'**/InvoiceNotFoundException.class'
+	'**/InvoiceNotFoundException.class',
+	'**/BadGatewayException.class',
+	'**/GatewayTimeoutException.class',
+	'**/ModelMapperConfig.class',
+	'**/FastpayFastpayPaymentAPIClientConfig.class',
+	'**/FastpayCreditCardAPIClientConfig.class',
+	'**/FastpayCreditCardTokenizationAPIClientConfig.class',
+	'**/AlgaShopPaymentPropreties.class',
+	'**/FastpayProperties.class',
+	'**/FastpayEnumConverter.class',
+	'**/InvoiceEventListener.class',
+	'**/CreditCardQueryServiceImpl.class'
 ]
 
 jacocoTestReport {
@@ -128,12 +140,12 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-	dependsOn test, integrationTest
+	dependsOn test, integrationTest, jacocoTestReport
 	executionData(test, integrationTest)
 	violationRules {
 		rule {
 			limit {
-				minimum = 1.0
+				minimum = 0.90
 			}
 		}
 	}

@@ -113,6 +113,27 @@ class InvoiceUnitTest {
     }
 
     @Test
+    void shouldNoopUpdatePaymentStatusPending() {
+        Invoice invoice = Invoice.issue("order-1", UUID.randomUUID(), aPayer(), oneItem());
+
+        invoice.updatePaymentStatus(PaymentStatus.PENDING);
+
+        assertThat(invoice.isUnpaid()).isTrue();
+        assertThat(invoice.isPaid()).isFalse();
+        assertThat(invoice.isCanceled()).isFalse();
+    }
+
+    @Test
+    void shouldNoopUpdatePaymentStatusProcessing() {
+        Invoice invoice = Invoice.issue("order-1", UUID.randomUUID(), aPayer(), oneItem());
+
+        invoice.updatePaymentStatus(PaymentStatus.PROCESSING);
+
+        assertThat(invoice.isUnpaid()).isTrue();
+        assertThat(invoice.isCanceled()).isFalse();
+    }
+
+    @Test
     void shouldUpdatePaymentStatusFailed() {
         Invoice invoice = Invoice.issue("order-1", UUID.randomUUID(), aPayer(), oneItem());
 
