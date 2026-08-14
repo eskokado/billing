@@ -16,9 +16,11 @@ import com.eskcti.algashop.billing.domain.model.invoice.InvoiceRepository;
 import com.eskcti.algashop.billing.domain.model.invoice.InvoicingService;
 import com.eskcti.algashop.billing.domain.model.invoice.LineItem;
 import com.eskcti.algashop.billing.domain.model.invoice.Payer;
+import com.eskcti.algashop.billing.domain.model.invoice.PaymentMethod;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.Payment;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentGatewayService;
 import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentRequest;
+import com.eskcti.algashop.billing.domain.model.invoice.payment.PaymentStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +38,14 @@ public class InvoiceManagementApplicationService {
   @Transactional
   public UUID generate(GenerateInvoiceInput input) {
     PaymentSettingsInput paymentSettings = input.getPaymentSettings();
-    verifyCreditCardId(paymentSettings.getCreditCardId());
+    if (paymentSettings.getMethod().equals(PaymentMethod.CREDIT_CARD)) {
+      UUID creditCardId = paymentSettings.getCreditCardId();
+      UUID customerId = input.getCustomerId();
+      if (!creditCardRepository.existsByIdAndCustomerId(creditCardId, customerId)) {
+        throw new CreditCardNotFoundException(
+            String.format("Credit card %s not found for customer %s", creditCardId, customerId));
+      }
+    }
 
     Payer payer = convertToPayer(input.getPayer());
     Set<LineItem> items = convertToLineItems(input.getItems());
@@ -66,6 +75,13 @@ public class InvoiceManagementApplicationService {
     }
 
     invoicingService.assignPayment(invoice, payment);
+    invoiceRepository.saveAndFlush(invoice);
+  }
+
+  @Transactional
+  public void updatePaymentStatus(UUID invoiceId, PaymentStatus paymentStatus) {
+    Invoice invoice = invoiceRepository.findById(invoiceId).orElseThrow(() -> new InvoiceNotFoundException());
+    invoice.updatePaymentStatus(paymentStatus);
     invoiceRepository.saveAndFlush(invoice);
   }
 
@@ -111,11 +127,5 @@ public class InvoiceManagementApplicationService {
             .number(addressData.getNumber())
             .build())
         .build();
-  }
-
-  private void verifyCreditCardId(UUID creditCardId) {
-    if (creditCardId != null && !creditCardRepository.existsById(creditCardId)) {
-      throw new CreditCardNotFoundException();
-    }
   }
 }

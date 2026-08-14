@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import com.eskcti.algashop.billing.domain.model.invoice.PaymentMethod;
 
+import jakarta.validation.constraints.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentSettingsInput {
+  @NotNull(message = "Payment method is required")
   private PaymentMethod method;
   private UUID creditCardId;
 }
