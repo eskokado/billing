@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billing
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+    format-sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    user: postgres
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/billing

@@ -1,3 +1,10 @@
 spring:
   profiles:
     active: test
+    group:
+      test:
+        - base
+        - test
+      integration:
+        - base
+        - it

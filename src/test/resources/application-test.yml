@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: billing
   datasource:
     url: jdbc:h2:mem:billing;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=ORDER,VALUE,KEY,YEAR,USER
     driver-class-name: org.h2.Driver

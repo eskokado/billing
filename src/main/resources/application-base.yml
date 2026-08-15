@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: ordering
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+
+algashop:
+  integrations:
+    payment:
+      provider: FASTPAY #FAKE
+      fastpay:
+        hostname: http://localhost:8087
+        private-token: SSEewtC6Ps5yJLdB6SJmh1bqJXgRbCdf8ocDj2hU
+        webhook-url: http://host.docker.internal:8082/api/v1/webhooks/fastpay
