@@ -3,5 +3,5 @@ spring:
     url: jdbc:postgresql://algashop-postgres:5432/billing
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/testdata
     url: jdbc:postgresql://algashop-postgres:5432/billing
