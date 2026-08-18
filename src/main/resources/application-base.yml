@@ -17,3 +17,12 @@ algashop:
         hostname: http://localhost:8087
         private-token: SSEewtC6Ps5yJLdB6SJmh1bqJXgRbCdf8ocDj2hU
         webhook-url: http://host.docker.internal:8082/api/v1/webhooks/fastpay
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
