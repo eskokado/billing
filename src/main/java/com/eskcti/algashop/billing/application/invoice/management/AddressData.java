@@ -1,6 +1,7 @@
 package com.eskcti.algashop.billing.application.invoice.management;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,5 +31,6 @@ public class AddressData {
   private String state;
 
   @NotBlank(message = "Zip code is required")
+  @Size(min = 5, max = 5, message = "Zip code must have exactly 5 digits")
   private String zipCode;
 }
