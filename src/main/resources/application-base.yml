@@ -26,3 +26,45 @@ management:
   endpoint:
     health:
       show-details: always
+
+resilience4j:
+  retry:
+    instances:
+      fastpayPayment:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.ErrorResponseException
+        ignoreExceptions:
+          - com.eskcti.algashop.billing.presentation.BadGatewayException
+          - com.eskcti.algashop.billing.presentation.GatewayTimeoutException
+          - org.springframework.web.client.HttpClientErrorException$NotFound
+  circuitbreaker:
+    instances:
+      fastpayPayment:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        recordExceptions:
+          - java.net.SocketTimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.ErrorResponseException
+          - java.io.IOException
+        ignoreExceptions:
+          - com.eskcti.algashop.billing.presentation.BadGatewayException
+          - com.eskcti.algashop.billing.presentation.GatewayTimeoutException
+          - org.springframework.web.client.HttpClientErrorException$NotFound
+  bulkhead:
+    instances:
+      fastpayPayment:
+        maxConcurrentCalls: 25
+        maxWaitDuration: 0
