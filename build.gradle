@@ -7,9 +7,9 @@ buildscript {
 
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.4'
-	id 'io.spring.dependency-management' version '1.1.7'
-	id 'org.flywaydb.flyway' version '11.13.0'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '11.20.0'
 	id 'jacoco'
 }
 
@@ -18,8 +18,19 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(25)
 	}
+}
+
+sourceSets {
+    main {
+        java { exclude '.opencode/**' }
+        resources { exclude '.opencode/**', '.agents/**' }
+    }
+    test {
+        java { exclude '.opencode/**' }
+        resources { exclude '.opencode/**', '.agents/**' }
+    }
 }
 
 configurations {
@@ -35,12 +46,15 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-restclient'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:5.1.0'
 	implementation 'commons-validator:commons-validator:1.9.0'
 	implementation 'io.hypersistence:hypersistence-tsid:2.1.4'
   implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.modelmapper:modelmapper:3.2.4'
   implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
@@ -55,6 +69,8 @@ dependencies {
 
 	testImplementation 'org.wiremock:wiremock-standalone:3.13.1'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	testImplementation 'org.assertj:assertj-core:3.27.3'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -137,7 +153,8 @@ def jacocoCoverageExcludes = [
 	'**/FastpayProperties.class',
 	'**/FastpayEnumConverter.class',
 	'**/InvoiceEventListener.class',
-	'**/CreditCardQueryServiceImpl.class'
+	'**/CreditCardQueryServiceImpl.class',
+	"**/CustomRedisCacheHealthIndicator.class"
 ]
 
 jacocoTestReport {

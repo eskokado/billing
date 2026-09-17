@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,8 +38,7 @@ class FastpayWebhookControllerTest {
 
         doNothing().when(fastpayWebhookHandler).process(any(FastpayPaymentWebhookEvent.class));
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         String body = mapper.writeValueAsString(event);
 
         mockMvc.perform(post("/api/v1/webhooks/fastpay")
@@ -57,8 +56,7 @@ class FastpayWebhookControllerTest {
         event.setMethod("");
         event.setNotifiedAt(null);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         String body = mapper.writeValueAsString(event);
 
         mockMvc.perform(post("/api/v1/webhooks/fastpay")
@@ -80,8 +78,7 @@ class FastpayWebhookControllerTest {
         doThrow(new RuntimeException("Handler broken"))
                 .when(fastpayWebhookHandler).process(any(FastpayPaymentWebhookEvent.class));
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
+        ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         String body = mapper.writeValueAsString(event);
 
         mockMvc.perform(post("/api/v1/webhooks/fastpay")
