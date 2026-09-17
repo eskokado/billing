@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 
@@ -374,5 +376,93 @@ class ResilientFastpayPaymentClientTest {
                 assertThatThrownBy(() -> client.findById(DEFAULT_PAYMENT_ID))
                                 .isInstanceOf(GatewayTimeoutException.class)
                                 .hasMessageContaining("timed out");
+        }
+
+        @Test
+        void shouldCaptureFallbackRethrowGatewayTimeoutException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("captureFallback", Throwable.class);
+                method.setAccessible(true);
+
+                GatewayTimeoutException ex = new GatewayTimeoutException("timeout",
+                                new RuntimeException("root"));
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("timeout");
+        }
+
+        @Test
+        void shouldCaptureFallbackRethrowBadGatewayException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("captureFallback", Throwable.class);
+                method.setAccessible(true);
+
+                BadGatewayException ex = new BadGatewayException("gateway down", new RuntimeException("root"));
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("gateway down");
+        }
+
+        @Test
+        void shouldCaptureFallbackWrapOtherThrowableInBadGatewayException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("captureFallback", Throwable.class);
+                method.setAccessible(true);
+
+                RuntimeException ex = new RuntimeException("unexpected");
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("unavailable");
+        }
+
+        @Test
+        void shouldFindByIdFallbackRethrowGatewayTimeoutException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("findByIdFallback", Throwable.class);
+                method.setAccessible(true);
+
+                GatewayTimeoutException ex = new GatewayTimeoutException("timeout",
+                                new RuntimeException("root"));
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(GatewayTimeoutException.class)
+                                .hasMessageContaining("timeout");
+        }
+
+        @Test
+        void shouldFindByIdFallbackRethrowBadGatewayException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("findByIdFallback", Throwable.class);
+                method.setAccessible(true);
+
+                BadGatewayException ex = new BadGatewayException("gateway down", new RuntimeException("root"));
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("gateway down");
+        }
+
+        @Test
+        void shouldFindByIdFallbackWrapOtherThrowableInBadGatewayException() throws Exception {
+                Method method = ResilientFastpayPaymentClient.class
+                                .getDeclaredMethod("findByIdFallback", Throwable.class);
+                method.setAccessible(true);
+
+                RuntimeException ex = new RuntimeException("unexpected");
+
+                assertThatThrownBy(() -> invokeUnchecked(method, ex))
+                                .isInstanceOf(BadGatewayException.class)
+                                .hasMessageContaining("unavailable");
+        }
+
+        private void invokeUnchecked(Method method, Object... args) throws Throwable {
+                try {
+                        method.invoke(client, args);
+                } catch (InvocationTargetException e) {
+                        throw e.getCause();
+                }
         }
 }
