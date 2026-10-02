@@ -4,29 +4,13 @@ import com.eskcti.algashop.billing.domain.model.creditcard.LimitedCreditCard;
 import com.eskcti.algashop.billing.infrastructure.AbstractFastpayIT;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 import java.time.Year;
 import java.util.Optional;
 import java.util.UUID;
 
-@SpringBootTest
-@Import(FastpayCreditCardTokenizationAPIClientConfig.class)
 class CreditCardProviderServiceFastpayImplIT extends AbstractFastpayIT {
-    @BeforeAll
-    public static void beforeAll() {
-        startMock();
-    }
-
-    @AfterAll
-    public static void afterAll() {
-        stopMock();
-    }
 
     @Test
     public void shouldRegisterCreditCard() {

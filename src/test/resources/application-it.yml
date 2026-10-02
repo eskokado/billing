@@ -3,9 +3,10 @@ spring:
     activate:
       on-profile: it
   datasource:
-    url: jdbc:postgresql://localhost:5432/billing_test
-    username: postgres
-    password: postgres
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+      connection-timeout: 10000
   jpa:
     hibernate:
       ddl-auto: create-drop

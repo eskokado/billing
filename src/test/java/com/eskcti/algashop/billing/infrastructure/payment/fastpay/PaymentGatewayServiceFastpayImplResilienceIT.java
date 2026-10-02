@@ -3,13 +3,10 @@ package com.eskcti.algashop.billing.infrastructure.payment.fastpay;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
 import com.eskcti.algashop.billing.domain.model.invoice.InvoiceTestDataBuilder;
@@ -28,21 +25,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
 class PaymentGatewayServiceFastpayImplResilienceIT extends AbstractFastpayIT {
 
         @Autowired
         private PaymentGatewayService service;
-
-        @BeforeAll
-        public static void beforeAll() {
-                startMock();
-        }
-
-        @AfterAll
-        public static void afterAll() {
-                stopMock();
-        }
 
         @BeforeEach
         void setUp() {
