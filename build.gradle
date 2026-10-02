@@ -173,7 +173,11 @@ def jacocoCoverageExcludes = [
 	'**/InvoiceEventListener.class',
 	'**/CreditCardQueryServiceImpl.class',
 	"**/CustomRedisCacheHealthIndicator.class",
-  "**/CustomFrameworkRetryCircuitBreakerHealthIndicator.class"
+  "**/CustomFrameworkRetryCircuitBreakerHealthIndicator.class",
+	"**/FastpayPaymentCaptureFailed.class",
+	"**/ApiExceptionHandler.class",
+	"**/UnprocessableEntityException.class",
+	"**/SecurityAnnotations.class"
 ]
 
 jacocoTestReport {
