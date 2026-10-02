@@ -12,6 +12,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://algashop-authorization-server:8081
   flyway:
     enabled: false
 
