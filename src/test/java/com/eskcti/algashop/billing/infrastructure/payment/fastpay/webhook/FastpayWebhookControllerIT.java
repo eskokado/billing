@@ -1,13 +1,12 @@
 package com.eskcti.algashop.billing.infrastructure.payment.fastpay.webhook;
 
+import com.eskcti.algashop.billing.AbstractControllerIT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
 
@@ -19,10 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(FastpayWebhookController.class)
-class FastpayWebhookControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+class FastpayWebhookControllerIT extends AbstractControllerIT {
 
     @MockitoBean
     private FastpayWebhookHandler fastpayWebhookHandler;

@@ -1,5 +1,6 @@
 package com.eskcti.algashop.billing.presentation;
 
+import com.eskcti.algashop.billing.AbstractControllerIT;
 import com.eskcti.algashop.billing.application.invoice.management.GenerateInvoiceInput;
 import com.eskcti.algashop.billing.application.invoice.management.InvoiceManagementApplicationService;
 import com.eskcti.algashop.billing.application.invoice.management.LineItemInput;
@@ -11,11 +12,9 @@ import com.eskcti.algashop.billing.domain.model.invoice.InvoiceStatus;
 import com.eskcti.algashop.billing.domain.model.invoice.PaymentMethod;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -32,12 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(InvoiceController.class)
-class InvoiceControllerTest {
+class InvoiceControllerIT extends AbstractControllerIT {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @MockitoBean
     private InvoiceQueryService invoiceQueryService;
@@ -62,7 +58,7 @@ class InvoiceControllerTest {
         when(invoiceManagementApplicationService.generate(any(GenerateInvoiceInput.class))).thenReturn(invoiceId);
         when(invoiceQueryService.findByOrderId(orderId)).thenReturn(output);
 
-        mockMvc.perform(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -90,7 +86,7 @@ class InvoiceControllerTest {
                 .when(invoiceManagementApplicationService).processPayment(invoiceId);
         when(invoiceQueryService.findByOrderId(orderId)).thenReturn(output);
 
-        mockMvc.perform(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated());
@@ -110,7 +106,7 @@ class InvoiceControllerTest {
 
         when(invoiceQueryService.findByOrderId(orderId)).thenReturn(output);
 
-        mockMvc.perform(get("/api/v1/orders/{orderId}/invoice", orderId))
+        authenticated(get("/api/v1/orders/{orderId}/invoice", orderId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderId").value(orderId))
                 .andExpect(jsonPath("$.status").value(InvoiceStatus.PAID.name()));
@@ -121,7 +117,7 @@ class InvoiceControllerTest {
         String orderId = "order-empty";
         GenerateInvoiceInput input = new GenerateInvoiceInput();
 
-        mockMvc.perform(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())

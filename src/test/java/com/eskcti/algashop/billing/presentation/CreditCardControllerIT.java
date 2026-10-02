@@ -1,16 +1,15 @@
 package com.eskcti.algashop.billing.presentation;
 
+import com.eskcti.algashop.billing.AbstractControllerIT;
 import com.eskcti.algashop.billing.application.creditcard.management.CreditCardManagementService;
 import com.eskcti.algashop.billing.application.creditcard.management.TokenizedCreditCardInput;
 import com.eskcti.algashop.billing.application.creditcard.query.CreditCardOutput;
 import com.eskcti.algashop.billing.application.creditcard.query.CreditCardQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,12 +21,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CreditCardController.class)
-class CreditCardControllerTest {
+class CreditCardControllerIT extends AbstractControllerIT {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @MockitoBean
     private CreditCardManagementService creditCardManagementService;
@@ -53,7 +49,7 @@ class CreditCardControllerTest {
         when(creditCardManagementService.register(any(TokenizedCreditCardInput.class))).thenReturn(creditCardId);
         when(creditCardQueryService.findOne(customerId, creditCardId)).thenReturn(output);
 
-        mockMvc.perform(post("/api/v1/customers/{customerId}/credit-cards", customerId)
+        authenticated(post("/api/v1/customers/{customerId}/credit-cards", customerId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -68,7 +64,7 @@ class CreditCardControllerTest {
         TokenizedCreditCardInput input = new TokenizedCreditCardInput();
         input.setTokenizedCard("   ");
 
-        mockMvc.perform(post("/api/v1/customers/{customerId}/credit-cards", customerId)
+        authenticated(post("/api/v1/customers/{customerId}/credit-cards", customerId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())
@@ -93,7 +89,7 @@ class CreditCardControllerTest {
 
         when(creditCardQueryService.findByCustomer(customerId)).thenReturn(List.of(card1, card2));
 
-        mockMvc.perform(get("/api/v1/customers/{customerId}/credit-cards", customerId))
+        authenticated(get("/api/v1/customers/{customerId}/credit-cards", customerId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -114,7 +110,7 @@ class CreditCardControllerTest {
 
         when(creditCardQueryService.findOne(customerId, creditCardId)).thenReturn(card);
 
-        mockMvc.perform(get("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
+        authenticated(get("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
                         customerId, creditCardId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(creditCardId.toString()))
@@ -126,7 +122,7 @@ class CreditCardControllerTest {
         UUID customerId = UUID.randomUUID();
         UUID creditCardId = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
+        authenticated(delete("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
                         customerId, creditCardId))
                 .andExpect(status().isNoContent());
     }
