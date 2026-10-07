@@ -177,7 +177,9 @@ def jacocoCoverageExcludes = [
 	"**/FastpayPaymentCaptureFailed.class",
 	"**/ApiExceptionHandler.class",
 	"**/UnprocessableEntityException.class",
-	"**/SecurityAnnotations.class"
+	"**/SecurityAnnotations.class",
+	"**/BadGatewayException.class"
+
 ]
 
 jacocoTestReport {
