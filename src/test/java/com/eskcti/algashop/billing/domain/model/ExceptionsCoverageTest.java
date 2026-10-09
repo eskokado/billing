@@ -48,11 +48,13 @@ class ExceptionsCoverageTest {
         RuntimeException cause = new RuntimeException("cause");
 
         BadGatewayException bgEmpty = new BadGatewayException();
+        BadGatewayException bgMsg = new BadGatewayException("msg");
         BadGatewayException bgCause = new BadGatewayException("msg", cause);
         GatewayTimeoutException gtEmpty = new GatewayTimeoutException();
         GatewayTimeoutException gtCause = new GatewayTimeoutException("msg", cause);
 
         assertThat(bgEmpty).hasMessage(null);
+        assertThat(bgMsg).hasMessage("msg");
         assertThat(bgCause).hasMessage("msg").hasCause(cause);
         assertThat(gtEmpty).hasMessage(null);
         assertThat(gtCause).hasMessage("msg").hasCause(cause);
@@ -63,6 +65,23 @@ class ExceptionsCoverageTest {
         assertThatThrownBy(() -> {
             throw gtEmpty;
         }).isInstanceOf(GatewayTimeoutException.class);
+    }
+
+    @Test
+    void shouldInstantiateServerErrorExceptionConstructors() {
+        RuntimeException cause = new RuntimeException("cause");
+
+        BadGatewayException.ServerErrorException empty =
+                new BadGatewayException.ServerErrorException();
+        BadGatewayException.ServerErrorException msgCause =
+                new BadGatewayException.ServerErrorException("msg", cause);
+
+        assertThat(empty).hasMessage(null);
+        assertThat(msgCause).hasMessage("msg").hasCause(cause);
+
+        assertThatThrownBy(() -> {
+            throw empty;
+        }).isInstanceOf(BadGatewayException.class);
     }
 
     @Test

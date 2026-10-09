@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MockJwtDecoderFactory {
@@ -19,7 +20,7 @@ public class MockJwtDecoderFactory {
             "credit-cards:write",
     };
 
-    public static final String DEFAULT_SUBJECT = "test-user";
+    public static final String DEFAULT_SUBJECT = "00000000-0000-0000-0000-000000000001";
 
     public static final String DEFAULT_TOKEN_VALUE = "fake.jwt.token";
 
@@ -41,6 +42,7 @@ public class MockJwtDecoderFactory {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", subject);
         claims.put("iss", issuer);
+        claims.put("aud", List.of("algashop-api"));
 
         if (scopes != null && scopes.length > 0) {
             claims.put("scope", String.join(" ", scopes));
@@ -51,6 +53,7 @@ public class MockJwtDecoderFactory {
                 .expiresAt(expiresAt)
                 .issuer(issuer)
                 .subject(subject)
+                .audience(List.of("algashop-api"))
                 .claims(c -> c.putAll(claims))
                 .headers(h -> h.put("alg", "none"))
                 .build();

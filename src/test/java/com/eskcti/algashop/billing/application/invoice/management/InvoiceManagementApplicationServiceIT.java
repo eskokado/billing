@@ -12,14 +12,20 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +84,23 @@ class InvoiceManagementApplicationServiceIT {
 
   @MockitoSpyBean
   private InvoiceEventListener invoiceEventListener;
+
+  @BeforeEach
+  void authenticateHumanUser() {
+    UUID userId = UUID.randomUUID();
+    Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "none")
+        .subject(userId.toString())
+        .audience(List.of("algashop-billing"))
+        .build();
+    SecurityContextHolder.getContext().setAuthentication(
+        new JwtAuthenticationToken(jwt, List.of(() -> "SCOPE_invoices:write")));
+  }
+
+  @AfterEach
+  void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
+  }
 
   @Test
   void shouldGenerateInvoiceWithCreditCardAsPayment() {
