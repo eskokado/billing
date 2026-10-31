@@ -5,6 +5,7 @@ import com.eskcti.algashop.billing.application.creditcard.management.CreditCardM
 import com.eskcti.algashop.billing.application.creditcard.management.TokenizedCreditCardInput;
 import com.eskcti.algashop.billing.application.creditcard.query.CreditCardOutput;
 import com.eskcti.algashop.billing.application.creditcard.query.CreditCardQueryService;
+import com.eskcti.algashop.billing.utils.MockJwtDecoderFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -20,8 +21,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CreditCardController.class)
-class CreditCardControllerIT extends AbstractControllerIT {
+@WebMvcTest(MyCreditCardController.class)
+class MyCreditCardControllerIT extends AbstractControllerIT {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -33,7 +34,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
     @Test
     void shouldRegisterCreditCard() throws Exception {
-        UUID customerId = UUID.randomUUID();
+        UUID customerId = UUID.fromString(MockJwtDecoderFactory.DEFAULT_SUBJECT);
         UUID creditCardId = UUID.randomUUID();
 
         TokenizedCreditCardInput input = new TokenizedCreditCardInput();
@@ -49,7 +50,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
         when(creditCardManagementService.register(any(TokenizedCreditCardInput.class))).thenReturn(creditCardId);
         when(creditCardQueryService.findOne(customerId, creditCardId)).thenReturn(output);
 
-        authenticated(post("/api/v1/customers/{customerId}/credit-cards", customerId)
+        authenticatedAsCustomer(post("/api/v1/customers/me/credit-cards")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -60,11 +61,10 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
     @Test
     void shouldReturn400WhenTokenizedCardIsBlank() throws Exception {
-        UUID customerId = UUID.randomUUID();
         TokenizedCreditCardInput input = new TokenizedCreditCardInput();
         input.setTokenizedCard("   ");
 
-        authenticated(post("/api/v1/customers/{customerId}/credit-cards", customerId)
+        authenticatedAsCustomer(post("/api/v1/customers/me/credit-cards")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())
@@ -73,7 +73,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
     @Test
     void shouldReturnAllCreditCardsOfCustomer() throws Exception {
-        UUID customerId = UUID.randomUUID();
+        UUID customerId = UUID.fromString(MockJwtDecoderFactory.DEFAULT_SUBJECT);
         CreditCardOutput card1 = new CreditCardOutput();
         card1.setId(UUID.randomUUID());
         card1.setLastNumbers("1111");
@@ -89,7 +89,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
         when(creditCardQueryService.findByCustomer(customerId)).thenReturn(List.of(card1, card2));
 
-        authenticated(get("/api/v1/customers/{customerId}/credit-cards", customerId))
+        authenticatedAsCustomer(get("/api/v1/customers/me/credit-cards"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
@@ -99,7 +99,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
     @Test
     void shouldFindOneCreditCard() throws Exception {
-        UUID customerId = UUID.randomUUID();
+        UUID customerId = UUID.fromString(MockJwtDecoderFactory.DEFAULT_SUBJECT);
         UUID creditCardId = UUID.randomUUID();
         CreditCardOutput card = new CreditCardOutput();
         card.setId(creditCardId);
@@ -110,8 +110,7 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
         when(creditCardQueryService.findOne(customerId, creditCardId)).thenReturn(card);
 
-        authenticated(get("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
-                        customerId, creditCardId))
+        authenticatedAsCustomer(get("/api/v1/customers/me/credit-cards/{creditCardId}", creditCardId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(creditCardId.toString()))
                 .andExpect(jsonPath("$.lastNumbers").value("1111"));
@@ -119,11 +118,11 @@ class CreditCardControllerIT extends AbstractControllerIT {
 
     @Test
     void shouldDeleteCreditCard() throws Exception {
-        UUID customerId = UUID.randomUUID();
+        UUID customerId = UUID.fromString(MockJwtDecoderFactory.DEFAULT_SUBJECT);
         UUID creditCardId = UUID.randomUUID();
 
-        authenticated(delete("/api/v1/customers/{customerId}/credit-cards/{creditCardId}",
-                        customerId, creditCardId))
+
+        authenticatedAsCustomer(delete("/api/v1/customers/me/credit-cards/{creditCardId}", creditCardId))
                 .andExpect(status().isNoContent());
     }
 }

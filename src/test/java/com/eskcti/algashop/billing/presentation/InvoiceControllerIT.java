@@ -58,7 +58,7 @@ class InvoiceControllerIT extends AbstractControllerIT {
         when(invoiceManagementApplicationService.generate(any(GenerateInvoiceInput.class))).thenReturn(invoiceId);
         when(invoiceQueryService.findByOrderId(orderId)).thenReturn(output);
 
-        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticatedAsMachine(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -86,7 +86,7 @@ class InvoiceControllerIT extends AbstractControllerIT {
                 .when(invoiceManagementApplicationService).processPayment(invoiceId);
         when(invoiceQueryService.findByOrderId(orderId)).thenReturn(output);
 
-        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticatedAsMachine(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated());
@@ -117,13 +117,27 @@ class InvoiceControllerIT extends AbstractControllerIT {
         String orderId = "order-empty";
         GenerateInvoiceInput input = new GenerateInvoiceInput();
 
-        authenticated(post("/api/v1/orders/{orderId}/invoice", orderId)
+        authenticatedAsMachine(post("/api/v1/orders/{orderId}/invoice", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Invalid fields"))
                 .andExpect(jsonPath("$.type").value("/errors/invalid-fields"))
                 .andExpect(jsonPath("$.fields").isMap());
+    }
+
+    @Test
+    void shouldForbidCustomerFromReadingInvoices() throws Exception {
+        authenticatedAsCustomer(get("/api/v1/orders/{orderId}/invoice", "order-1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldForbidRegularUserFromGeneratingInvoices() throws Exception {
+        authenticated(post("/api/v1/orders/{orderId}/invoice", "order-1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validInput("order-1"))))
+                .andExpect(status().isForbidden());
     }
 
     private GenerateInvoiceInput validInput(String orderId) {

@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,6 +52,39 @@ class InvoiceQueryServiceImplTest {
         when(invoiceRepository.findByOrderId(orderId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByOrderId(orderId))
+                .isInstanceOf(InvoiceNotFoundException.class);
+    }
+
+    @Test
+    void shouldFindByOrderIdAndCustomerId() {
+        String orderId = "order-abc";
+        UUID customerId = UUID.randomUUID();
+        Invoice invoice = InvoiceTestDataBuilder.anInvoice()
+                .orderId(orderId)
+                .customerId(customerId)
+                .build();
+        InvoiceOutput output = new InvoiceOutput();
+        output.setOrderId(orderId);
+        output.setCustomerId(customerId);
+
+        when(invoiceRepository.findByOrderIdAndCustomerId(orderId, customerId))
+                .thenReturn(Optional.of(invoice));
+        when(mapper.convert(invoice, InvoiceOutput.class)).thenReturn(output);
+
+        InvoiceOutput result = service.findByOrderIdAndCustomerId(orderId, customerId);
+
+        assertThat(result.getOrderId()).isEqualTo(orderId);
+        assertThat(result.getCustomerId()).isEqualTo(customerId);
+    }
+
+    @Test
+    void shouldThrowWhenOrderNotFoundForCustomer() {
+        String orderId = "not-found-order";
+        UUID customerId = UUID.randomUUID();
+        when(invoiceRepository.findByOrderIdAndCustomerId(orderId, customerId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.findByOrderIdAndCustomerId(orderId, customerId))
                 .isInstanceOf(InvoiceNotFoundException.class);
     }
 }

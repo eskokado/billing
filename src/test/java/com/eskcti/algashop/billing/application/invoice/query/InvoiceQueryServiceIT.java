@@ -62,4 +62,31 @@ class InvoiceQueryServiceIT {
     assertThatThrownBy(() -> invoiceQueryService.findByOrderId("non-existent-order"))
         .isInstanceOf(InvoiceNotFoundException.class);
   }
+
+  @Test
+  void shouldFindByOrderIdAndCustomerId() {
+    Invoice invoice = InvoiceTestDataBuilder.anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .build();
+    invoiceRepository.saveAndFlush(invoice);
+
+    InvoiceOutput invoiceOutput = invoiceQueryService.findByOrderIdAndCustomerId(
+        invoice.getOrderId(), invoice.getCustomerId());
+
+    assertThat(invoiceOutput.getId()).isEqualTo(invoice.getId());
+    assertThat(invoiceOutput.getOrderId()).isEqualTo(invoice.getOrderId());
+    assertThat(invoiceOutput.getCustomerId()).isEqualTo(invoice.getCustomerId());
+  }
+
+  @Test
+  void shouldThrowWhenOrderDoesNotBelongToCustomer() {
+    Invoice invoice = InvoiceTestDataBuilder.anInvoice()
+        .paymentSettings(PaymentMethod.GATEWAY_BALANCE, null)
+        .build();
+    invoiceRepository.saveAndFlush(invoice);
+
+    assertThatThrownBy(() -> invoiceQueryService.findByOrderIdAndCustomerId(
+        invoice.getOrderId(), java.util.UUID.randomUUID()))
+        .isInstanceOf(InvoiceNotFoundException.class);
+  }
 }

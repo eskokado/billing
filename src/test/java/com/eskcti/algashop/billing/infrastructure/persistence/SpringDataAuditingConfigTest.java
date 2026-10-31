@@ -1,6 +1,6 @@
 package com.eskcti.algashop.billing.infrastructure.persistence;
 
-import com.eskcti.algashop.billing.application.security.SecurityCheckApplicationService;
+import com.eskcti.algashop.billing.application.security.SecurityChecks;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
@@ -32,7 +32,7 @@ class SpringDataAuditingConfigTest {
 
     @Test
     void shouldProvideCurrentAuditorWhenUserIsAuthenticated() {
-        SecurityCheckApplicationService securityCheck = mock(SecurityCheckApplicationService.class);
+        SecurityChecks securityCheck = mock(SecurityChecks.class);
         UUID userId = UUID.randomUUID();
         when(securityCheck.isAuthenticated()).thenReturn(true);
         when(securityCheck.isMachineAuthenticated()).thenReturn(false);
@@ -45,7 +45,7 @@ class SpringDataAuditingConfigTest {
 
     @Test
     void shouldProvideNoAuditorWhenNotAuthenticated() {
-        SecurityCheckApplicationService securityCheck = mock(SecurityCheckApplicationService.class);
+        SecurityChecks securityCheck = mock(SecurityChecks.class);
         when(securityCheck.isAuthenticated()).thenReturn(false);
 
         AuditorAware<UUID> auditorAware = new SpringDataAuditingConfig().auditorProvider(securityCheck);
@@ -55,7 +55,7 @@ class SpringDataAuditingConfigTest {
 
     @Test
     void shouldProvideNoAuditorWhenMachineAuthenticated() {
-        SecurityCheckApplicationService securityCheck = mock(SecurityCheckApplicationService.class);
+        SecurityChecks securityCheck = mock(SecurityChecks.class);
         when(securityCheck.isAuthenticated()).thenReturn(true);
         when(securityCheck.isMachineAuthenticated()).thenReturn(true);
 
