@@ -4,6 +4,8 @@ import com.eskcti.algashop.billing.application.invoice.management.GenerateInvoic
 import com.eskcti.algashop.billing.application.invoice.management.InvoiceManagementApplicationService;
 import com.eskcti.algashop.billing.application.invoice.query.InvoiceOutput;
 import com.eskcti.algashop.billing.application.invoice.query.InvoiceQueryService;
+import com.eskcti.algashop.billing.infrastructure.security.SecurityAnnotations.CanGenerateInvoices;
+import com.eskcti.algashop.billing.infrastructure.security.SecurityAnnotations.CanReadInvoices;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +28,7 @@ public class InvoiceController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @CanWriteInvoices
+    @CanGenerateInvoices
     public InvoiceOutput generate(@PathVariable String orderId, @Valid @RequestBody GenerateInvoiceInput input) {
         input.setOrderId(orderId);
         UUID invoiceId = invoiceManagementApplicationService.generate(input);

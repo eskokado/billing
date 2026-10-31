@@ -9,25 +9,34 @@ import java.lang.annotation.Target;
 
 public class SecurityAnnotations {
 
-    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Target({ ElementType.METHOD, ElementType.TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    @PreAuthorize("hasAuthority('SCOPE_invoices:read')")
-    public @interface CanReadInvoices {}
+    @PreAuthorize("hasAuthority('SCOPE_invoices:write') and @securityChecks.isMachineAuthenticated()")
+    public @interface CanGenerateInvoices {
+    }
 
-    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Target({ ElementType.METHOD, ElementType.TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    @PreAuthorize("hasAuthority('SCOPE_invoices:write')")
-    public @interface CanWriteInvoices {}
+    @PreAuthorize("hasAuthority('SCOPE_invoices:read') and not hasRole('CUSTOMER')")
+    public @interface CanReadInvoices {
+    }
 
-    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Target({ ElementType.METHOD, ElementType.TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    @PreAuthorize("hasAuthority('SCOPE_credit-cards:read')")
-    public @interface CanReadCreditCards {}
+    @PreAuthorize("hasAuthority('SCOPE_invoices:read') and hasRole('CUSTOMER')")
+    public @interface CanReadMyInvoices {
+    }
 
-    @Target({ElementType.METHOD, ElementType.TYPE})
+    @Target({ ElementType.METHOD, ElementType.TYPE })
     @Retention(RetentionPolicy.RUNTIME)
-    @PreAuthorize("hasAuthority('SCOPE_credit-cards:write')")
-    public @interface CanWriteCreditCards {}
+    @PreAuthorize("hasAuthority('SCOPE_credit-cards:read') and hasRole('CUSTOMER')")
+    public @interface CanReadMyCreditCards {
+    }
+
+    @Target({ ElementType.METHOD, ElementType.TYPE })
+    @Retention(RetentionPolicy.RUNTIME)
+    @PreAuthorize("hasAuthority('SCOPE_credit-cards:write') and hasRole('CUSTOMER')")
+    public @interface CanWriteMyCreditCards {
+    }
 
 }
-

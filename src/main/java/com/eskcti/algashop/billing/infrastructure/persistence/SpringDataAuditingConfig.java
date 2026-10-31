@@ -1,6 +1,6 @@
 package com.eskcti.algashop.billing.infrastructure.persistence;
 
-import com.eskcti.algashop.billing.application.security.SecurityCheckApplicationService;
+import com.eskcti.algashop.billing.application.security.SecurityChecks;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -16,13 +16,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableJpaAuditing(dateTimeProviderRef = "auditingDateTimeProvider", auditorAwareRef = "auditorProvider")
 public class SpringDataAuditingConfig {
 
-  @Bean
-  public DateTimeProvider auditingDateTimeProvider() {
-    return () -> Optional.of(OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS));
-  }
+    @Bean
+    public DateTimeProvider auditingDateTimeProvider() {
+        return () -> Optional.of(OffsetDateTime.now().truncatedTo(ChronoUnit.MILLIS));
+    }
 
     @Bean
-    public AuditorAware<UUID> auditorProvider(SecurityCheckApplicationService securityCheck) {
+    public AuditorAware<UUID> auditorProvider(SecurityChecks securityCheck) {
         return () -> {
             if (!securityCheck.isAuthenticated() || securityCheck.isMachineAuthenticated()) {
                 return Optional.empty();
