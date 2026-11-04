@@ -9,5 +9,6 @@ spring:
     redis:
       host: algashop-redis
       port: 6379
+      password: ${billing.secrets.redis-password}
       database: 1
-      timeout: 20
+      timeout: 600
