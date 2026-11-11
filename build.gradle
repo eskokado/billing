@@ -78,6 +78,7 @@ dependencies {
 
   implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-framework-retry'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'org.springframework.boot:spring-boot-starter-flyway'
