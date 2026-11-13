@@ -153,6 +153,7 @@ tasks.register('integrationTest', Test) {
 
 bootJar {
 	archiveFileName = 'billing.jar'
+  exclude '.opencode/**', '.agents/**'
 }
 
 tasks.register('dockerBuild', Exec) {
