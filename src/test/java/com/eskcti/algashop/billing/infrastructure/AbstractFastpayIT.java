@@ -63,9 +63,9 @@ public abstract class AbstractFastpayIT {
         wiremockFastpay.start();
     }
 
-    protected static void stopMock() {
+    protected static void resetMock() {
         if (wiremockFastpay != null && wiremockFastpay.isRunning()) {
-            wiremockFastpay.stop();
+            wiremockFastpay.resetToDefaultMappings();
         }
     }
 
@@ -75,8 +75,8 @@ public abstract class AbstractFastpayIT {
     }
 
     @AfterEach
-    public void stopWireMock() {
-        stopMock();
+    public void resetWireMock() {
+        resetMock();
     }
 
     protected LimitedCreditCard registerCard() {
